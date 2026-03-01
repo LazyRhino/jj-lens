@@ -1,0 +1,92 @@
+{
+  "name": "jj-lens",
+  "displayName": "Jujutsu (JJ) Lens",
+  "description": "Jujutsu source control integration for VS Code",
+  "version": "0.0.4",
+  "publisher": "local-publisher",
+  "extensionKind": [
+    "workspace"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/local/jj-lens"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "SCM Providers"
+  ],
+  "activationEvents": [
+    "workspaceContains:.jj"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jj-lens.commit",
+        "title": "JJ: Describe/Commit",
+        "icon": "$(check)"
+      },
+      {
+        "command": "jj-lens.split",
+        "title": "JJ: Split Change",
+        "icon": "$(split-horizontal)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "jj-lens.commit",
+          "group": "navigation",
+          "when": "scmProvider == jj"
+        },
+        {
+          "command": "jj-lens.split",
+          "group": "navigation",
+          "when": "scmProvider == jj"
+        }
+      ]
+    },
+    "colors": [
+      {
+        "id": "jjLens.modifiedForeground",
+        "description": "Color for modified files in JJ Lens.",
+        "defaults": {
+          "dark": "#E2C08D",
+          "light": "#895503",
+          "highContrast": "#E2C08D"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "JJ Lens",
+      "properties": {
+        "jj-lens.commitAction": {
+          "type": "string",
+          "enum": [
+            "commit",
+            "describe"
+          ],
+          "default": "commit",
+          "description": "Action to perform when the Commit/Describe button is clicked. 'commit' creates a new empty working copy revision. 'describe' only updates the description of the current working copy without sealing it."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.x",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "eslint": "^8.x",
+    "typescript": "^5.x"
+  }
+}
