@@ -1,59 +1,37 @@
-name: Auto Release VSIX
+name: Build and Release VSIX
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "releases/*.vsix"
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  build_and_release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 2 # Need some history to check what changed
+          node-version: '20'
 
-      - name: Find new VSIX files
-        id: find_vsix
-        run: |
-          # Find vsix files added in the latest commit
-          ADDED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep '^releases/.*\.vsix$' || true)
-          
-          if [ -z "$ADDED_FILES" ]; then
-            echo "No new .vsix files found."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          
-          # Since we might have multiple (unlikely), we'll just take the first one
-          VSIX_PATH=$(echo "$ADDED_FILES" | head -n 1)
-          echo "Found new VSIX: $VSIX_PATH"
-          echo "vsix_path=$VSIX_PATH" >> "$GITHUB_OUTPUT"
-          
-          # Extract version from filename (e.g., jj-lens-0.0.5.vsix -> 0.0.5)
-          FILENAME=$(basename "$VSIX_PATH")
-          VERSION=$(echo "$FILENAME" | sed -E 's/.*-([0-9]+\.[0-9]+\.[0-9]+).*\.vsix/\1/')
-          
-          if [ -z "$VERSION" ] || [ "$VERSION" = "$FILENAME" ]; then
-            echo "Could not extract version from $FILENAME"
-            exit 1
-          fi
-          
-          echo "Extracted version: $VERSION"
-          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Create or Update Release
-        if: steps.find_vsix.outputs.skip == 'false'
+      - name: Extract Version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Package VSIX
+        run: npx @vscode/vsce package --out jj-lens-${{ steps.get_version.outputs.VERSION }}.vsix
+        
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.find_vsix.outputs.version }}
-          name: Release ${{ steps.find_vsix.outputs.version }}
-          files: ${{ steps.find_vsix.outputs.vsix_path }}
           generate_release_notes: true
+          files: jj-lens-${{ steps.get_version.outputs.VERSION }}.vsix
