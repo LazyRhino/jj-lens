@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const jjCli = new JjCli(rootPath);
     const docProvider = new JjDocumentProvider(jjCli);
-    const scmProvider = new JjScmProvider(context, rootPath, jjCli);
+    const scmProvider = new JjScmProvider(context, rootPath, jjCli, docProvider);
 
     // Register Document Provider
     context.subscriptions.push(
@@ -77,8 +77,8 @@ export function activate(context: vscode.ExtensionContext) {
     let refreshTimeout: NodeJS.Timeout | undefined;
 
     const debouncedRefresh = (uri: vscode.Uri) => {
-        // Ignore .jj directory and node_modules entirely
-        if (uri.fsPath.includes('.jj') || uri.fsPath.includes('node_modules')) {
+        // Ignore node_modules entirely
+        if (uri.fsPath.includes('node_modules')) {
             return;
         }
 

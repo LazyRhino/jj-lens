@@ -4,12 +4,27 @@ import { JjCli } from './jjCli';
 export class JjDocumentProvider implements vscode.TextDocumentContentProvider {
     static scheme = 'jj';
 
+    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    get onDidChange(): vscode.Event<vscode.Uri> {
+        return this._onDidChange.event;
+    }
+
+    private trackedUris = new Set<string>();
+
     constructor(private jjCli: JjCli) { }
+
+    updateAll() {
+        for (const uriStr of this.trackedUris) {
+            this._onDidChange.fire(vscode.Uri.parse(uriStr));
+        }
+    }
 
     async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
         // The URI should be something like jj:/path/to/file
         // And optionally a query string for the revision, e.g. jj:/path/to/file?rev=@-
         // We'll use @- (the parent of the working copy) as the base for diffing the working copy.
+
+        this.trackedUris.add(uri.toString());
 
         let path = uri.fsPath;
         if (uri.path) {

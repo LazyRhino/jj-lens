@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { JjDocumentProvider } from './jjDocumentProvider';
 import { JjCli } from './jjCli';
 import * as path from 'path';
 
@@ -6,7 +7,7 @@ export class JjScmProvider {
     private scm: vscode.SourceControl;
     private workingTreeGroup: vscode.SourceControlResourceGroup;
 
-    constructor(private extensionContext: vscode.ExtensionContext, private workspaceRoot: string, private jjCli: JjCli) {
+    constructor(private extensionContext: vscode.ExtensionContext, private workspaceRoot: string, private jjCli: JjCli, private docProvider: JjDocumentProvider) {
         this.scm = vscode.scm.createSourceControl('jj', 'Jujutsu', vscode.Uri.file(workspaceRoot));
         this.workingTreeGroup = this.scm.createResourceGroup('workingTree', 'Changes');
 
@@ -48,6 +49,7 @@ export class JjScmProvider {
             });
 
             this.workingTreeGroup.resourceStates = resourceStates;
+            this.docProvider.updateAll();
         } catch (e: any) {
             console.error('jj-lens SCM Refresh Failed:', e.message);
         }
