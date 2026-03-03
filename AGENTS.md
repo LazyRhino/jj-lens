@@ -15,7 +15,7 @@ Follow these instructions when preparing a new release of `jj-lens`:
 4. **Tag the Release**: Create a new tag pointing to the commit you just made. The tag **must** start with `v` (e.g., `v0.0.6`) for the GitHub Action to recognize it.
    ```bash
    jj workspace root # Ensure you are at the project root
-   jj git tag create "v0.0.6" -r @- 
+   jj tag create "v0.0.6" -r @- 
    ```
    *(Note: `@-` points to the commit you just created. If you didn't commit and are just tagging the working copy parent, use `@-`.)*
 5. **Push Tag to GitHub**: Push the newly created tag to the remote repository. 
