@@ -3,3 +3,5 @@ src/
 .gitignore
 .vscodeignore
 tsconfig.json
+.jj/
+.github/
