@@ -32,6 +32,11 @@
         "command": "jj-lens.split",
         "title": "JJ: Split Change",
         "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "jj-lens.refreshGraph",
+        "title": "Refresh Graph",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -45,6 +50,23 @@
           "command": "jj-lens.split",
           "group": "navigation",
           "when": "scmProvider == jj"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "jj-lens.refreshGraph",
+          "when": "view == jj-lens.graph",
+          "group": "navigation"
+        }
+      ]
+    },
+    "views": {
+      "scm": [
+        {
+          "id": "jj-lens.graph",
+          "name": "Jujutsu Graph",
+          "type": "webview",
+          "icon": "$(git-commit)"
         }
       ]
     },
@@ -70,6 +92,11 @@
           ],
           "default": "commit",
           "description": "Action to perform when the Commit/Describe button is clicked. 'commit' creates a new empty working copy revision. 'describe' only updates the description of the current working copy without sealing it."
+        },
+        "jj-lens.inlineBlame": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline blame annotations to the right of the code, showing the commit info for the current line."
         }
       }
     }

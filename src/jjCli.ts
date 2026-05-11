@@ -64,4 +64,24 @@ export class JjCli {
     async getFileHistory(filePath: string): Promise<string> {
         return await this.execute(['log', '--limit', '5', '-T', 'commit_id.short() ++ " " ++ author.name() ++ " " ++ description.first_line() ++ "\\n"', filePath]);
     }
+
+    async annotate(filePath: string): Promise<string> {
+        return await this.execute([
+            '--color=never',
+            '--no-pager',
+            'file',
+            'annotate',
+            filePath,
+            '-T',
+            'commit.change_id().short() ++ "\\t" ++ commit.author().name() ++ "\\t" ++ commit.committer().timestamp().ago() ++ "\\t" ++ commit.description().first_line() ++ "\\n"'
+        ]);
+    }
+
+    async show(revision: string): Promise<string> {
+        return await this.execute(['--color=never', '--no-pager', 'show', '-r', revision]);
+    }
+
+    async getLogGraph(template: string): Promise<string> {
+        return await this.execute(['--color=always', '--no-pager', 'log', '-T', template]);
+    }
 }

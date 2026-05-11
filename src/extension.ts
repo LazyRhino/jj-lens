@@ -2,7 +2,9 @@ import * as vscode from 'vscode';
 import { JjScmProvider } from './jjScm';
 import { JjDocumentProvider } from './jjDocumentProvider';
 import { JjCli } from './jjCli';
-import { JjHoverProvider } from './jjHoverProvider';
+import { JjLineBlameController } from './jjLineBlame';
+import { JjShowProvider } from './jjShowProvider';
+import { JjGraphViewProvider } from './jjGraphViewProvider';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('jj-lens is now active!');
@@ -15,11 +17,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     const jjCli = new JjCli(rootPath);
     const docProvider = new JjDocumentProvider(jjCli);
-    const scmProvider = new JjScmProvider(context, rootPath, jjCli, docProvider);
+    const showProvider = new JjShowProvider(jjCli);
+    
+    const lineBlameController = new JjLineBlameController(jjCli);
+    const graphViewProvider = new JjGraphViewProvider(context.extensionUri, jjCli);
+    const scmProvider = new JjScmProvider(context, rootPath, jjCli, docProvider, lineBlameController, graphViewProvider);
 
-    // Register Document Provider
+    // Register Document Providers
     context.subscriptions.push(
-        vscode.workspace.registerTextDocumentContentProvider(JjDocumentProvider.scheme, docProvider)
+        vscode.workspace.registerTextDocumentContentProvider(JjDocumentProvider.scheme, docProvider),
+        vscode.workspace.registerTextDocumentContentProvider(JjShowProvider.scheme, showProvider)
+    );
+
+    // Register Webview View Provider for the Graph
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('jj-lens.graph', graphViewProvider)
     );
 
     // Initial load
@@ -71,6 +83,11 @@ export function activate(context: vscode.ExtensionContext) {
         terminal.sendText('jj split');
     });
 
+    // Command: refresh graph
+    let refreshGraphDisposable = vscode.commands.registerCommand('jj-lens.refreshGraph', () => {
+        graphViewProvider.refresh();
+    });
+
     // Watch for file changes using RelativePattern to respect files.watcherExclude
     // Using a plain string '**/*' causes VS Code to bypass exclusions, exhausting inotify handles in WSL.
     const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolders[0], '**/*'));
@@ -94,11 +111,14 @@ export function activate(context: vscode.ExtensionContext) {
     watcher.onDidCreate(debouncedRefresh);
     watcher.onDidDelete(debouncedRefresh);
 
-    // Register Hover Provider
-    const hoverProvider = new JjHoverProvider(jjCli);
-    const hoverDisposable = vscode.languages.registerHoverProvider('*', hoverProvider);
-
-    context.subscriptions.push(openChangeDisposable, commitDisposable, splitDisposable, watcher, hoverDisposable);
+    context.subscriptions.push(
+        openChangeDisposable,
+        commitDisposable,
+        splitDisposable,
+        refreshGraphDisposable,
+        watcher,
+        lineBlameController
+    );
 }
 
 export function deactivate() { }

@@ -2,12 +2,21 @@ import * as vscode from 'vscode';
 import { JjDocumentProvider } from './jjDocumentProvider';
 import { JjCli } from './jjCli';
 import * as path from 'path';
+import { JjLineBlameController } from './jjLineBlame';
+import { JjGraphViewProvider } from './jjGraphViewProvider';
 
 export class JjScmProvider {
     private scm: vscode.SourceControl;
     private workingTreeGroup: vscode.SourceControlResourceGroup;
 
-    constructor(private extensionContext: vscode.ExtensionContext, private workspaceRoot: string, private jjCli: JjCli, private docProvider: JjDocumentProvider) {
+    constructor(
+        private extensionContext: vscode.ExtensionContext,
+        private workspaceRoot: string,
+        private jjCli: JjCli,
+        private docProvider: JjDocumentProvider,
+        private lineBlameController?: JjLineBlameController,
+        private graphProvider?: JjGraphViewProvider
+    ) {
         this.scm = vscode.scm.createSourceControl('jj', 'Jujutsu', vscode.Uri.file(workspaceRoot));
         this.workingTreeGroup = this.scm.createResourceGroup('workingTree', 'Changes');
 
@@ -50,6 +59,13 @@ export class JjScmProvider {
 
             this.workingTreeGroup.resourceStates = resourceStates;
             this.docProvider.updateAll();
+
+            if (this.lineBlameController) {
+                this.lineBlameController.clearCache();
+            }
+            if (this.graphProvider) {
+                this.graphProvider.refresh();
+            }
         } catch (e: any) {
             console.error('jj-lens SCM Refresh Failed:', e.message);
         }
